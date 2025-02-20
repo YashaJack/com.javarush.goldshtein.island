@@ -8,12 +8,12 @@ import entity.plant.Plant;
 import java.util.*;
 
 public class Location {
-    private final int x;
-    private final int y;
-    private List<Animal> animals = new ArrayList<>();
-    private List<Plant> plants = new ArrayList<>();
-    private static final int MAX_ANIMALS_PER_CELL = 500;
-    private static final int MAX_PLANTS_PER_CELL = 200;
+    public final int x;
+    public final int y;
+    public List<Animal> animals = new ArrayList<>();
+    public List<Plant> plants = new ArrayList<>();
+    public static final int MAX_ANIMALS_PER_CELL = 500;
+    public static final int MAX_PLANTS_PER_CELL = 200;
 
     private static final Map<Class<? extends Animal>, Integer> maxAnimalsPerType = new HashMap<>();
 
@@ -48,7 +48,26 @@ public class Location {
         return y;
     }
 
-    // Метод получения максимального количества животных этого вида в клетке
+    public List<Location> getNeighbors(Island island) {
+        List<Location> neighbors = new ArrayList<>();
+        int width = island.getWidth();
+        int height = island.getHeight();
+
+        int[][] directions = {
+                {-1, 0}, {1, 0}, {0, -1}, {0, 1},
+                {-1, -1}, {-1, 1}, {1, -1}, {1, 1}
+        };
+
+        for (int[] dir : directions) {
+            int newX = x + dir[0];
+            int newY = y + dir[1];
+            if (newX >= 0 && newX < width && newY >= 0 && newY < height) {
+                neighbors.add(island.getLocation(newX, newY));
+            }
+        }
+        return neighbors;
+    }
+
     public int getMaxAnimalsPerType(Class<? extends Animal> animalClass) {
         return maxAnimalsPerType.getOrDefault(animalClass, Integer.MAX_VALUE);
     }
@@ -57,17 +76,14 @@ public class Location {
         return MAX_ANIMALS_PER_CELL;
     }
 
-
     public List<Animal> getAnimals() {
         return animals;
     }
-
 
     public List<Plant> getPlants() {
         return plants;
     }
 
-    // Добавление животного в клетку с проверкой лимита
     public void addAnimal(Animal animal) {
         int currentCount = (int) animals.stream().filter(a -> a.getClass().equals(animal.getClass())).count();
         int maxAllowed = getMaxAnimalsPerType(animal.getClass());
@@ -79,12 +95,10 @@ public class Location {
         }
     }
 
-    // Удаление животного из клетки
     public void removeAnimal(Animal animal) {
         animals.remove(animal);
     }
 
-    // Добавление растения с проверкой лимита
     public void addPlant(Plant plant) {
         if (plants.size() < MAX_PLANTS_PER_CELL) {
             plants.add(plant);
@@ -93,7 +107,6 @@ public class Location {
         }
     }
 
-    //Удаление растения
     public void removePlant(Plant plant) {
         plants.remove(plant);
     }

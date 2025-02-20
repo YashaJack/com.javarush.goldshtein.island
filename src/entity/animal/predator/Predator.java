@@ -1,5 +1,6 @@
 package entity.animal.predator;
 
+import entity.Island;
 import entity.animal.Animal;
 import entity.Location;
 import entity.animal.herbivore.Duck;
@@ -19,19 +20,20 @@ public abstract class Predator extends Animal {
         foodProbability.put(Duck.class, 40);
     }
 
-    public Predator(String name, double weight, int speed, double foodNeeded, Location location) {
-        super(name, weight, speed, foodNeeded, location);
+    public Predator(String name, double weight, int speed, double foodNeeded, Location location, Island island) {
+        super(name, weight, speed, foodNeeded, location, island);
     }
 
     @Override
     public void eat() {
-        List<Animal> animalsInLocation = new ArrayList<>(location.getAnimals());
+        Iterator<Animal> iterator = location.getAnimals().iterator();
 
-        for (Animal prey : animalsInLocation) {
+        while (iterator.hasNext()) {
+            Animal prey = iterator.next();
             if (foodProbability.containsKey(prey.getClass())) {
                 int chance = foodProbability.get(prey.getClass());
                 if (random.nextInt(100) < chance) {
-                    location.getAnimals().remove(prey);
+                    iterator.remove(); // Безопасное удаление
                     hungerLevel = foodNeeded;
                     System.out.println(name + " съел " + prey.getName() + " и насытился!");
                     return;

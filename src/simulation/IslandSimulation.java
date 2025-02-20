@@ -12,91 +12,65 @@ import managers.StatisticsManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class IslandSimulation {
-        private final Island island;
-        private final SimulationScheduler scheduler;
+    private final Island island;
+    private final SimulationScheduler scheduler;
+    private final ExecutorService animalExecutor;
 
-        public IslandSimulation() {
-            this.island = new Island(SimulationConfig.ISLAND_WIDTH, SimulationConfig.ISLAND_HEIGHT);
-            IslandInitializer.populateIsland(island);
-            this.scheduler = new SimulationScheduler(this, SimulationConfig.SIMULATION_CYCLE_TIME);
-        }
+    public IslandSimulation() {
+        this.island = new Island(SimulationConfig.ISLAND_WIDTH, SimulationConfig.ISLAND_HEIGHT);
+        IslandInitializer.populateIsland(island);
+        this.scheduler = new SimulationScheduler(this, SimulationConfig.SIMULATION_CYCLE_TIME);
+        this.animalExecutor = Executors.newFixedThreadPool(10);
+    }
 
     public void start() {
         System.out.println("🌍 Остров готов, запускаем симуляцию...");
         StatisticsManager.printStatistics(island);
+
+        for (Location location : island.getLocations()) {
+            List<Animal> animalsCopy = new ArrayList<>(location.getAnimals()); // Создаем копию списка
+            for (Animal animal : animalsCopy) {
+                animalExecutor.submit(animal); // Запускаем животное в поток
+            }
+        }
     }
 
     public void growPlants() {
-        synchronized (island) {
-            System.out.println("🌱 Растения растут...");
-
-            Random random = new Random();
-            int newPlants = random.nextInt(100) + 1;
-
-            for (int i = 0; i < newPlants; i++) {
-                int x = random.nextInt(island.getWidth());
-                int y = random.nextInt(island.getHeight());
-                Location location = island.getLocation(x, y);
-
-                if (location.getPlants().size() < 200) {
-                    location.addPlant(new Plant());
-                    System.out.println("🌿 Новое растение выросло в клетке (" + x + "," + y + ")");
-                }
+        for (Location location : island.getLocations()) {
+            if (location.getPlants().size() < Location.MAX_PLANTS_PER_CELL) {
+                location.addPlant(new Plant(1.0));
             }
         }
     }
 
     public void updateAnimals() {
-        synchronized (island) {
-            System.out.println("🐾 Обновление состояния животных...");
-
-            List<Animal> deadAnimals = new ArrayList<>();
-
-            for (int x = 0; x < island.getWidth(); x++) {
-                for (int y = 0; y < island.getHeight(); y++) {
-                    Location location = island.getLocation(x, y);
-                    List<Animal> animals = new ArrayList<>(location.getAnimals());
-
-                    for (Animal animal : animals) {
-                        System.out.println("🔄 " + animal.getName() + " в клетке (" + x + "," + y + ")");
-
-                        animal.updateHunger(); // - сытость
-
-                        if (animal.getHungerLevel() <= 0) {
-                            deadAnimals.add(animal);
-                            continue;
-                        }
-
-                        animal.eat();
-                        animal.move(island);
-
-                        if (Math.random() < 0.1) {
-                            animal.reproduce();
-                        }
-                    }
-                }
-            }
-
-            for (Animal animal : deadAnimals) {
-                animal.getLocation().getAnimals().remove(animal);
-                System.out.println("💀 " + animal.getName() + " умер от голода.");
+        for (Location location : island.getLocations()) {
+            for (Animal animal : new ArrayList<>(location.getAnimals())) {
+                animal.run();
             }
         }
     }
 
-        public void printStatistics() {
-            StatisticsManager.printStatistics(island);
-        }
-
-        public void stop() {
-            scheduler.stop();
-            System.out.println("🚫 Симуляция завершена.");
-        }
-
-        public static void main(String[] args) {
-            IslandSimulation simulation = new IslandSimulation();
-            simulation.start();
-        }
+    public void printStatistics() {
+        StatisticsManager.printStatistics(island);
     }
+
+    public void stop() {
+        scheduler.stop();
+        animalExecutor.shutdownNow();
+    }
+
+    public static void main(String[] args) {
+        IslandSimulation simulation = new IslandSimulation();
+        simulation.start();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("\nЗавершаем симуляцию...");
+            simulation.stop();
+        }));
+    }
+}

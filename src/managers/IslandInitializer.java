@@ -44,7 +44,9 @@ public class IslandInitializer {
                 Location location = island.getLocation(x, y);
 
                 try {
-                    Animal animal = animalClass.getDeclaredConstructor(Location.class).newInstance(location);
+                    Animal animal = animalClass
+                            .getDeclaredConstructor(Location.class, Island.class)
+                            .newInstance(location, island);
                     location.addAnimal(animal);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -52,11 +54,11 @@ public class IslandInitializer {
             }
         }
 
-        int plantCount = random.nextInt(50) + 50;
+        int plantCount = random.nextInt(1) + 50;
         for (int i = 0; i < plantCount; i++) {
             int x = random.nextInt(island.getWidth());
             int y = random.nextInt(island.getHeight());
-            island.getLocation(x, y).addPlant(new Plant());
+            island.getLocation(x, y).addPlant(new Plant(1));
         }
 
         System.out.println("✅ Все животные и растения добавлены.");

@@ -1,15 +1,10 @@
 package entity.animal.predator;
 
+import entity.Island;
 import entity.Location;
-import entity.animal.Animal;
 
-public class Wolf extends Animal {
-    public Wolf(Location location) {
-        super("Wolf", 50, 3, 8, location);
-    }
-
-    @Override
-    public void reproduce() {
-        super.reproduce();
+public class Wolf extends Predator {
+    public Wolf(Location location, Island island) {
+        super("Волк", 50.0, 3, 8.0, location, island);
     }
 }

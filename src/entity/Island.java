@@ -1,5 +1,8 @@
 package entity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Island {
     private final int width;
     private final int height;
@@ -23,6 +26,16 @@ public class Island {
 
     public Location[][] getMap() {
         return map;
+    }
+
+    public List<Location> getLocations() {
+        List<Location> locations = new ArrayList<>();
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                locations.add(map[x][y]);
+            }
+        }
+        return locations;
     }
 
     public int getWidth() {
